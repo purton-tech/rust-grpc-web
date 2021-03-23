@@ -8,9 +8,18 @@ pub mod hello_world {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    
+    let req = HelloRequest {
+        name: String::from("Purton")
+    };
+    let mut proto_buffer: Vec<u8> = Vec::new();
+    req.encode(&mut proto_buffer).unwrap();
+    let base64 = base64::encode(proto_buffer);
+
+
     let client = reqwest::Client::new();
     let resp = client.post("http://localhost:8080/helloworld/Greeter/SayHello")
-        .body("the exact body that is sent")
+        .body(base64)
         .send()
         .await?
         .text()

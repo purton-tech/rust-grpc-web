@@ -40,11 +40,12 @@ pub fn generate<T: Service>(
         /// Generated server implementations.
         pub mod #server_mod {
             #![allow(unused_variables, dead_code, missing_docs)]
-            use tonic::codegen::*;
+            use async_trait::async_trait;
+            use actix_web::Result;
 
             #generated_trait
 
-            #service_doc
+            /***#service_doc
             #[derive(Debug)]
             pub struct #server_service<T: #server_trait> {
                 inner: _Inner<T>,
@@ -118,6 +119,7 @@ pub fn generate<T: Service>(
             }
 
             #transport
+            **/
         }
     }
 }
@@ -162,15 +164,15 @@ fn generate_trait_methods<T: Service>(
             (false, false) => {
                 quote! {
                     #method_doc
-                    async fn #name(&self, request: tonic::Request<#req_message>)
-                        -> Result<tonic::Response<#res_message>, tonic::Status>;
+                    async fn #name(&self, request: #req_message)
+                        -> Result<#res_message>;
                 }
             }
             (true, false) => {
                 quote! {
                     #method_doc
-                    async fn #name(&self, request: tonic::Request<tonic::Streaming<#req_message>>)
-                        -> Result<tonic::Response<#res_message>, tonic::Status>;
+                    async fn #name(&self, request: <#req_message>)
+                        -> Result<#res_message>;
                 }
             }
             (false, true) => {

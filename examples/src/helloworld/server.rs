@@ -1,17 +1,34 @@
-use actix_web::{Error, get, middleware, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use hello_world::{HelloReply, HelloRequest};
+use actix_web::{Error, get, middleware, web, App, HttpRequest, web::Bytes, HttpResponse, HttpServer, Responder, Result};
+use hello_world::{HelloReply, HelloRequest, greeter_server};
+use crate::hello_world::greeter_server::Greeter;
 use base64;
 use prost::Message;
+use async_trait::async_trait;
 
 pub mod hello_world {
     include!(concat!(env!("OUT_DIR"), concat!("/helloworld.rs")));
 }
 
-// curl -H "Content-Type: application/json" -d '{"name":"xyz"}' http://localhost:8080/helloworld/Greeter/SayHello
-async fn greeter_say_hello(hello_request: HttpRequest) -> impl Responder {
-    let reply = HelloReply {
-        message: String::from("Hello world!")
-    };
+struct GreeterImpl;
+
+#[async_trait]
+impl greeter_server::Greeter for GreeterImpl {
+    async fn say_hello(&self, request: HelloRequest) -> Result<HelloReply> {
+        Ok(HelloReply {
+            message: String::from(format!("Boom {}", request.name))
+        })
+    }
+}
+
+async fn greeter_say_hello(hello_request: HttpRequest, body: Bytes) -> impl Responder {
+    
+    let buffer = base64::decode(body).unwrap();
+    let s = HelloRequest::decode(buffer.as_ref()).unwrap();
+
+    let greeter = GreeterImpl;
+
+    let reply = greeter.say_hello(s).await.unwrap();
+
     let mut proto_buffer: Vec<u8> = Vec::new();
     reply.encode(&mut proto_buffer).unwrap();
     base64::encode(proto_buffer)
