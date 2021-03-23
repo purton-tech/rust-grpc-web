@@ -17,6 +17,7 @@ services:
       - ~/.ssh:/home/host-ssh:cached
       - /var/run/docker.sock:/var/run/docker.sock
       - target:/vscode/target # Set target as a volume for performance. 
+      - eg_target:/vscode/examples/target # Set target as a volume for performance. 
 
     environment:
       DATABASE_URL: postgresql://vscode:testpassword@db:5432
@@ -34,3 +35,4 @@ services:
 
 volumes:
   target:
+  eg_target:
