@@ -3,6 +3,10 @@ use hello_world::{HelloReply, HelloRequest};
 use base64;
 use prost::Message;
 
+pub mod hello_world {
+    include!(concat!(env!("OUT_DIR"), concat!("/helloworld.rs")));
+}
+
 // curl -H "Content-Type: application/json" -d '{"name":"xyz"}' http://localhost:8080/helloworld/Greeter/SayHello
 async fn greeter_say_hello(hello_request: HttpRequest) -> impl Responder {
     let reply = HelloReply {
@@ -11,10 +15,6 @@ async fn greeter_say_hello(hello_request: HttpRequest) -> impl Responder {
     let mut proto_buffer: Vec<u8> = Vec::new();
     reply.encode(&mut proto_buffer).unwrap();
     base64::encode(proto_buffer)
-}
-
-pub mod hello_world {
-    include!(concat!(env!("OUT_DIR"), concat!("/helloworld.rs")));
 }
 
 #[actix_web::main]
