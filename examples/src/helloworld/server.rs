@@ -20,14 +20,12 @@ impl greeter_server::Greeter for GreeterImpl {
     }
 }
 
-async fn greeter_say_hello(hello_request: HttpRequest, body: Bytes) -> impl Responder {
+async fn greeter_say_hello(body: Bytes, greeter: web::Data<Box<dyn greeter_server::Greeter>>) -> impl Responder {
     
     let buffer = base64::decode(body).unwrap();
     let s = HelloRequest::decode(buffer.as_ref()).unwrap();
 
-    let greeter = GreeterImpl;
-
-    let reply = greeter.say_hello(s).await.unwrap();
+    let reply = greeter.into_inner().say_hello(s).await.unwrap();
 
     let mut proto_buffer: Vec<u8> = Vec::new();
     reply.encode(&mut proto_buffer).unwrap();
@@ -40,8 +38,9 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
-            .wrap(middleware::Logger::default())
+            .data::<Box<dyn greeter_server::Greeter>>(Box::new(GreeterImpl {}))
             .route("/helloworld/Greeter/SayHello", web::post().to(greeter_say_hello))
+            .wrap(middleware::Logger::default())
     })
     .bind("0.0.0.0:8080")?
     .workers(1)
