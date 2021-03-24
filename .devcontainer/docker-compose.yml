@@ -1,12 +1,6 @@
 version: '3.4'
 services:
 
-  db:
-    image: postgres:alpine
-    environment:
-      POSTGRES_PASSWORD: testpassword
-      POSTGRES_USER: vscode
-
   development:
     build: 
       context: .
@@ -17,7 +11,7 @@ services:
       - ~/.ssh:/home/host-ssh:cached
       - /var/run/docker.sock:/var/run/docker.sock
       - target:/vscode/target # Set target as a volume for performance. 
-      - eg_target:/vscode/examples/target # Set target as a volume for performance. 
+      - hello_world_target:/vscode/examples/helloworld/target # Set target as a volume for performance. 
 
     environment:
       DATABASE_URL: postgresql://vscode:testpassword@db:5432
@@ -29,10 +23,7 @@ services:
     command: sleep infinity
 
     working_dir: /vscode
-    
-    depends_on:
-      - db
 
 volumes:
   target:
-  eg_target:
+  hello_world_target:

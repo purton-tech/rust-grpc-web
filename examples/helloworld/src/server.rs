@@ -12,7 +12,7 @@ struct GreeterImpl;
 impl greeter_server::Greeter for GreeterImpl {
     async fn say_hello(&self, hello_request: HelloRequest) -> Result<HelloReply> {
         Ok(HelloReply {
-            message: String::from(format!("Boom {}", hello_request.name))
+            message: String::from(format!("Hello {}", hello_request.name))
         })
     }
 }

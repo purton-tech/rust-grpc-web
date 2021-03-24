@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = greeter_client::Greeter::new(String::from("http://localhost:8080"));
     
     let req = HelloRequest {
-        name: String::from("Purton")
+        name: String::from("World!")
     };
 
     let res = client.say_hello(req).await?;
