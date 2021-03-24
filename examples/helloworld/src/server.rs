@@ -22,6 +22,7 @@ async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     HttpServer::new(|| {
+
         App::new()
             .data::<Box<dyn greeter_server::Greeter>>(Box::new(GreeterImpl {}))
             .configure(greeter_server::routes)
