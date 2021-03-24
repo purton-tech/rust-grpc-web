@@ -8,7 +8,7 @@ pub mod hello_world {
 }
 
 use seed::{prelude::*, *};
-use hello_world::{HelloRequest, greeter_client};
+use hello_world::{HelloRequest, HelloReply, greeter_client};
 
 // ------ ------
 //     Init
@@ -31,27 +31,30 @@ type Model = i32;
 // ------ ------
 
 // (Remove the line below once any of your `Msg` variants doesn't implement `Copy`.)
-#[derive(Copy, Clone)]
+//#[derive(Copy, Clone)]
 // `Msg` describes the different events you can modify state with.
 enum Msg {
     Increment,
+    Fetched(HelloReply)
 }
 
 // `update` describes how to handle each `Msg`.
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
         Msg::Increment => {
-
-            let client = greeter_client::Greeter::new(String::from("http://localhost:8080"));
+            async {
+                let client = greeter_client::Greeter::new(String::from("http://localhost:8080"));
             
-            let req = HelloRequest {
-                name: String::from("World!")
+                let req = HelloRequest {
+                    name: String::from("World!")
+                };
+
+                Msg::Fetched(client.say_hello(req).await.unwrap())
             };
-
-            //let res = client.say_hello(req).await.unwrap();
-
-            *model += 1
         },
+
+        Msg::Fetched(response_data) => {
+        }
     }
 }
 
