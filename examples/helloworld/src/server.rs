@@ -24,6 +24,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
 
         App::new()
+            .wrap(middleware::DefaultHeaders::new().header("Access-Control-Allow-Origin", "*"))
             .data::<Box<dyn greeter_server::Greeter>>(Box::new(GreeterImpl {}))
             .configure(greeter_server::routes)
             .wrap(middleware::Logger::default())
