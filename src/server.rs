@@ -22,6 +22,10 @@ pub fn generate<T: Service>(
         compile_well_known_types,
     );
 
+    let routes = generate_routes(
+        service,
+    );
+
     let server_mod = quote::format_ident!("{}_server", naive_snake_case(&service.name()));
     let generated_trait = generate_trait(
         service,
@@ -42,6 +46,10 @@ pub fn generate<T: Service>(
             #generated_trait
             
             #marshall_methods
+
+            pub fn routes(cfg: &mut web::ServiceConfig) {
+                #routes
+            }
         }
     }
 }
@@ -88,6 +96,39 @@ fn generate_trait_methods<T: Service>(
                     #method_doc
                     async fn #name(&self, request: #req_message)
                         -> Result<#res_message>;
+                }
+            }
+            (true, false) => {
+                TokenStream::new()
+            }
+            (false, true) => {
+                TokenStream::new()
+            }
+            (true, true) => {
+                TokenStream::new()
+            }
+        };
+
+        stream.extend(method);
+    }
+
+    stream
+}
+
+fn generate_routes<T: Service>(
+    service: &T,
+    ) -> TokenStream {
+    let mut stream = TokenStream::new();
+
+    for method in service.methods() {
+        let name = quote::format_ident!("{}", method.name());
+
+        let url = format!("/{}.{}/{}", service.package(), service.name(), method.identifier());
+
+        let method = match (method.client_streaming(), method.server_streaming()) {
+            (false, false) => {
+                quote! {
+                    cfg.service(web::resource(#url).route(web::post().to(#name)));
                 }
             }
             (true, false) => {

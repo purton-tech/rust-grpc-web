@@ -1,4 +1,4 @@
-use actix_web::{middleware, web, App, HttpServer, Result};
+use actix_web::{middleware, App, HttpServer, Result};
 use hello_world::{HelloReply, HelloRequest, greeter_server};
 use async_trait::async_trait;
 
@@ -10,9 +10,9 @@ struct GreeterImpl;
 
 #[async_trait]
 impl greeter_server::Greeter for GreeterImpl {
-    async fn say_hello(&self, request: HelloRequest) -> Result<HelloReply> {
+    async fn say_hello(&self, hello_request: HelloRequest) -> Result<HelloReply> {
         Ok(HelloReply {
-            message: String::from(format!("Boom {}", request.name))
+            message: String::from(format!("Boom {}", hello_request.name))
         })
     }
 }
@@ -24,7 +24,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .data::<Box<dyn greeter_server::Greeter>>(Box::new(GreeterImpl {}))
-            .route("/helloworld/Greeter/SayHello", web::post().to(greeter_server::say_hello))
+            .configure(greeter_server::routes)
             .wrap(middleware::Logger::default())
     })
     .bind("0.0.0.0:8080")?
