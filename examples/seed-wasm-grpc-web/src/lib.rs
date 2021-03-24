@@ -35,27 +35,36 @@ type Model = i32;
 // `Msg` describes the different events you can modify state with.
 enum Msg {
     Increment,
-    Fetched(HelloReply)
+    Fetched(Result<HelloReply, Box<dyn std::error::Error>>)
 }
 
 // `update` describes how to handle each `Msg`.
-fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::Increment => {
-            async {
-                let client = greeter_client::Greeter::new(String::from("http://localhost:8080"));
-            
-                let req = HelloRequest {
-                    name: String::from("World!")
-                };
-
-                Msg::Fetched(client.say_hello(req).await.unwrap())
-            };
+            orders.skip().perform_cmd({
+                async { Msg::Fetched(send_message("World!").await) }
+            });
         },
 
-        Msg::Fetched(response_data) => {
+        Msg::Fetched(Ok(response_data)) => {
+            log(response_data.message);
+        },
+
+        Msg::Fetched(Err(response_data)) => {
+            log("Hot a result");
         }
     }
+}
+
+async fn send_message(name: &str) -> Result<HelloReply, Box<dyn std::error::Error>> {
+    
+    let client = greeter_client::Greeter::new(String::from("http://localhost:8080"));
+            
+    let req = HelloRequest {
+        name: String::from(name)
+    };
+    client.say_hello(req).await
 }
 
 // ------ ------
