@@ -3,7 +3,12 @@
 // but some rules are too "annoying" or are not applicable for your case.)
 #![allow(clippy::wildcard_imports)]
 
+pub mod hello_world {
+    include!(concat!(env!("OUT_DIR"), concat!("/helloworld.rs")));
+}
+
 use seed::{prelude::*, *};
+use hello_world::{HelloRequest, greeter_client};
 
 // ------ ------
 //     Init
@@ -35,7 +40,18 @@ enum Msg {
 // `update` describes how to handle each `Msg`.
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Increment => *model += 1,
+        Msg::Increment => {
+
+            let client = greeter_client::Greeter::new(String::from("http://localhost:8080"));
+            
+            let req = HelloRequest {
+                name: String::from("World!")
+            };
+
+            //let res = client.say_hello(req).await.unwrap();
+
+            *model += 1
+        },
     }
 }
 

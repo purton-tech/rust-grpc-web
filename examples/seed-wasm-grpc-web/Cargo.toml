@@ -18,6 +18,11 @@ wasm-bindgen-test = "0.3.18"
 [dependencies]
 seed = "0.8.0"
 
+# For gRPC-Web
+prost = "0"
+base64 = "0"
+reqwest = { version = "0.11" }
+
 [profile.release]
 lto = true
 opt-level = 'z'
@@ -25,3 +30,6 @@ codegen-units = 1
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = ['-Os']
+
+[build-dependencies]
+rust-grpc-web = { path = "../../" }
