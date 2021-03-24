@@ -158,13 +158,15 @@ fn generate_marshalling_methods<T: Service>(
     for method in service.methods() {
         let name = quote::format_ident!("{}", method.name());
 
+        let service_name = quote::format_ident!("{}", service.name());
+
         let (req_message, _) =
             method.request_response_name(proto_path, compile_well_known_types);
 
         let method = match (method.client_streaming(), method.server_streaming()) {
             (false, false) => {
                 quote! {
-                    pub async fn #name(body: Bytes, greeter: web::Data<Box<dyn Greeter>>) -> impl Responder {
+                    pub async fn #name(body: Bytes, greeter: web::Data<Box<dyn #service_name>>) -> impl Responder {
                         
                         let buffer = base64::decode(body).unwrap();
                         let s = #req_message::decode(buffer.as_ref()).unwrap();

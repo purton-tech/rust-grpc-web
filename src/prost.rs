@@ -157,7 +157,6 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
         if self.builder.build_client {
             let client = client::generate(
                 &service,
-                self.builder.emit_package,
                 &self.builder.proto_path,
                 self.builder.compile_well_known_types,
             );
