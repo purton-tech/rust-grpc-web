@@ -1,0 +1,1 @@
+`docker run -v %cd%:/protofile -e protofile=helloworld.proto juanjodiaz/grpc-web-generator`
