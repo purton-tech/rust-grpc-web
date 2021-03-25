@@ -1,4 +1,4 @@
-use actix_web::{middleware, App, HttpServer, Result};
+use actix_web::{middleware, App, HttpServer, HttpRequest, Result, options};
 use hello_world::{HelloReply, HelloRequest, greeter_server};
 use async_trait::async_trait;
 
@@ -17,6 +17,11 @@ impl greeter_server::Greeter for GreeterImpl {
     }
 }
 
+#[options("/helloworld.Greeter/SayHello")]
+async fn option(_req: HttpRequest) -> &'static str {
+    "Hello world!"
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
@@ -24,8 +29,11 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
 
         App::new()
-            .wrap(middleware::DefaultHeaders::new().header("Access-Control-Allow-Origin", "*"))
+            .wrap(middleware::DefaultHeaders::new()
+                .header("Access-Control-Allow-Origin", "*")
+                .header("Access-Control-Allow-Headers", "*"))
             .data::<Box<dyn greeter_server::Greeter>>(Box::new(GreeterImpl {}))
+            .service(option)
             .configure(greeter_server::routes)
             .wrap(middleware::Logger::default())
     })
