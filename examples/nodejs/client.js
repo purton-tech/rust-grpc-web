@@ -6,6 +6,8 @@ var client = new GreeterClient('localhost:8080');
 var request = new HelloRequest();
 request.setName('World');
 
+console.log(request.serializeBinary())
+
 client.sayHello(request, {}, (err, response) => {
   console.log(response.getMessage());
 });
