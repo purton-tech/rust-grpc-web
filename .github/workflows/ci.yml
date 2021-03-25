@@ -1,0 +1,46 @@
+name: Continuous integration (CI)
+
+on:
+  push:
+    branches:
+    - master
+    paths-ignore:
+      - .github/**
+      - .vscode/**
+      - README.md
+      - .devcontainer/**
+  pull_request: 
+    paths-ignore:
+      - .github/**
+      - .vscode/**
+      - README.md
+      - .devcontainer/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      
+      - name: Cargo Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Check Code Format
+        run: cargo fmt 
+
+      - name: Clippy (A Rust Linter)
+        run: cargo clippy 
+
+      - name: Build
+        run: cargo build 
+
+      - name: Test
+        run: cargo test 
