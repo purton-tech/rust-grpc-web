@@ -45,3 +45,12 @@ $ cargo install cargo-make
 1. You can watch dev-server responses in the tab where you run `cargo make serve`.
 
 Open your browser at `localhost:8000`, click the button and in dev tools look at the console.
+
+### Yew Webassembly Client
+
+```bash
+$ cargo install --locked trunk
+$ trunk serve
+```
+
+Open your browser at `localhost:9000`
