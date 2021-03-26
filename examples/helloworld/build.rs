@@ -4,5 +4,4 @@ fn main() {
         .build_server(true)
         .compile(&["proto/helloworld.proto"], &["proto"])
         .unwrap();
-
 }

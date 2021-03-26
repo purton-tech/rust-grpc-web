@@ -1,4 +1,4 @@
-use hello_world::{HelloRequest, greeter_client};
+use hello_world::{greeter_client, HelloRequest};
 
 pub mod hello_world {
     include!(concat!(env!("OUT_DIR"), concat!("/helloworld.rs")));
@@ -6,11 +6,10 @@ pub mod hello_world {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-
     let client = greeter_client::Greeter::new(String::from("http://localhost:8080"));
-    
+
     let req = HelloRequest {
-        name: String::from("World!")
+        name: String::from("World!"),
     };
 
     let res = client.say_hello(req).await?;

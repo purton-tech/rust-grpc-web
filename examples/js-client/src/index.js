@@ -9,5 +9,6 @@ request.setName('World');
 console.log(request.serializeBinary())
 
 client.sayHello(request, {}, (err, response) => {
+  console.log(err)
   console.log(response.getMessage());
 });

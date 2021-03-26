@@ -31,7 +31,7 @@ pub fn generate<T: Service>(
         service,
         proto_path,
         compile_well_known_types,
-        server_trait.clone(),
+        server_trait,
     );
 
     quote! {
@@ -39,7 +39,7 @@ pub fn generate<T: Service>(
         pub mod #server_mod {
             #![allow(unused_variables, dead_code, missing_docs)]
             use async_trait::async_trait;
-            use actix_web::{web, web::Bytes, Responder, Result};
+            use actix_web::{web, web::Bytes, Responder, HttpResponse, Result};
             use base64;
             use prost::Message;
 
@@ -175,11 +175,14 @@ fn generate_marshalling_methods<T: Service>(
                     
                         let mut proto_buffer: Vec<u8> = Vec::new();
                         reply.encode(&mut proto_buffer).unwrap();
-                        //let mut frame: Vec<u8> = Vec::new();
-                        //frame.push(0 as u8);
-                        //frame.append(&mut (proto_buffer.len() as u32).to_be_bytes().to_vec());
-                        //frame.append(&mut proto_buffer);
-                        base64::encode(proto_buffer)
+                        let mut frame: Vec<u8> = Vec::new();
+                        frame.push(0 as u8);
+                        frame.append(&mut (proto_buffer.len() as u32).to_be_bytes().to_vec());
+                        frame.append(&mut proto_buffer);
+                        let body = base64::encode(frame);
+                        HttpResponse::Ok()
+                            .content_type("application/grpc-web-text")
+                            .body(body)
                     }
                 }
             }
