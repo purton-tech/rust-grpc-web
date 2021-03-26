@@ -12,13 +12,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - target:/vscode/target # Set target as a volume for performance. 
       - hello_world_target:/vscode/examples/helloworld/target # Set target as a volume for performance. 
-      - seed_target:/vscode/examples/seed-wasm-grpc-web/target # Set target as a volume for performance. 
+      - seed_target:/vscode/examples/seed-client/target # Set target as a volume for performance. 
+      - js_node:/vscode/examples/js-client/node_modules # Set target as a volume for performance. 
 
     environment:
       DATABASE_URL: postgresql://vscode:testpassword@db:5432
-
-    #env_file:
-    #  - ../.env
 
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
@@ -29,3 +27,4 @@ volumes:
   target:
   hello_world_target:
   seed_target:
+  js_node:

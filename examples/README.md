@@ -1,22 +1,37 @@
 ## Helloworld
 
-### Client
+### Rust Actix-Web Server
 
 ```bash
-$ cargo run --bin helloworld-client
-```
-
-### Server
-
-```bash
+$ cd helloworld
 $ cargo run --bin helloworld-server
 ```
 
-### Test the server
+Test the server
 
 `curl -X POST --data "AAAAAAcKBVdvcmxk" localhost:8080/helloworld.Greeter/SayHello`
 
-Browser geenrates 00 00 00 00 07 0a 05 57 6f 72 6c 64
-But we expect                    0a 05 57 6f 72 6c 64
+### Rust CLI Client
 
-What are the leading 5 bytes?
+```bash
+$ cd helloworld
+$ cargo run --bin helloworld-client
+```
+
+### Javascript Client (In browser)
+
+You'll need to start the Rust Actix-Web server then build and run the client.
+
+```bash
+$ cd js-client
+$ sudo apt update
+$ sudo apt install -y protobuf-compiler
+$ npm i protoc-gen-grpc-web
+$ npm install
+$ npm run protoc
+$ npm run start
+```
+
+Open your browser at `localhost:9000`
+
+### Seed.rs Webassembly Client
