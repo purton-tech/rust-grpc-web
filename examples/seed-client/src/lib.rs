@@ -43,7 +43,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::Increment => {
             orders.skip().perform_cmd({
-                async { Msg::Fetched(send_message("World!").await) }
+                async { Msg::Fetched(send_message("World2!").await) }
             });
         },
 
@@ -52,7 +52,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         },
 
         Msg::Fetched(Err(response_data)) => {
-            log("Hot a result");
+            log("Not a result");
         }
     }
 }

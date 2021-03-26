@@ -35,3 +35,13 @@ $ npm run start
 Open your browser at `localhost:9000`
 
 ### Seed.rs Webassembly Client
+
+```bash
+$ cd seed-client
+$ cargo install cargo-make
+```
+
+1. Watch compilation in the terminal tab where you run `cargo make watch`.
+1. You can watch dev-server responses in the tab where you run `cargo make serve`.
+
+Open your browser at `localhost:8000`, click the button and in dev tools look at the console.
