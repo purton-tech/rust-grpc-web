@@ -99,8 +99,8 @@ fn generate_unary<T: Method, S: Service>(
                 .await?;
 
             let buffer = base64::decode(resp)?;
-            
-            let s = #response::decode(buffer.as_ref())?;
+
+            let s = #response::decode(&buffer[5..])?;
             Ok(s)
         }
     }
