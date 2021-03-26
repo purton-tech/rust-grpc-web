@@ -50,7 +50,7 @@ Open your browser at `localhost:8000`, click the button and in dev tools look at
 
 ```bash
 $ cargo install --locked trunk
-$ trunk serve
+$ trunk serve --port=8081
 ```
 
-Open your browser at `localhost:9000`
+Open your browser at `localhost:8081`
