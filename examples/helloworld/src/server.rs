@@ -22,19 +22,9 @@ async fn option(_req: HttpRequest) -> &'static str {
     "Hello world!"
 }
 
-use prost::Message;
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-
-    let request = HelloRequest {
-        name: String::from("World")
-    };
-    let mut proto_buffer: Vec<u8> = Vec::new();
-    request.encode(&mut proto_buffer).unwrap();
-    let base64 = base64::encode(proto_buffer);
-    dbg!(base64);
 
     HttpServer::new(|| {
 

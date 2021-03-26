@@ -84,7 +84,11 @@ fn generate_unary<T: Method, S: Service>(
         ) -> Result<#response, Box<dyn std::error::Error>> {
             let mut proto_buffer: Vec<u8> = Vec::new();
             request.encode(&mut proto_buffer).unwrap();
-            let base64 = base64::encode(proto_buffer);
+            let mut frame: Vec<u8> = Vec::new();
+            frame.push(0 as u8);
+            frame.append(&mut (proto_buffer.len() as u32).to_be_bytes().to_vec());
+            frame.append(&mut proto_buffer);
+            let base64 = base64::encode(frame);
 
             let client = reqwest::Client::new();
             let resp = client.post(format!("{}{}", &self.host, #url))

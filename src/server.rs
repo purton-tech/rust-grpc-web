@@ -169,12 +169,16 @@ fn generate_marshalling_methods<T: Service>(
                     pub async fn #name(body: Bytes, greeter: web::Data<Box<dyn #service_name>>) -> impl Responder {
                         
                         let buffer = base64::decode(body).unwrap();
-                        let s = #req_message::decode(buffer.as_ref()).unwrap();
+                        let s = #req_message::decode(&buffer[5..]).unwrap();
                     
                         let reply = greeter.into_inner().say_hello(s).await.unwrap();
                     
                         let mut proto_buffer: Vec<u8> = Vec::new();
                         reply.encode(&mut proto_buffer).unwrap();
+                        //let mut frame: Vec<u8> = Vec::new();
+                        //frame.push(0 as u8);
+                        //frame.append(&mut (proto_buffer.len() as u32).to_be_bytes().to_vec());
+                        //frame.append(&mut proto_buffer);
                         base64::encode(proto_buffer)
                     }
                 }
