@@ -15,6 +15,7 @@ services:
       - seed_target:/vscode/examples/seed-client/target # Set target as a volume for performance. 
       - js_node:/vscode/examples/js-client/node_modules # Set target as a volume for performance. 
       - yew_target:/vscode/examples/yew-client/target # Set target as a volume for performance. 
+      - tonic_target:/vscode/examples/tonic-envoy/target # Set target as a volume for performance. 
 
     environment:
       DATABASE_URL: postgresql://vscode:testpassword@db:5432
@@ -28,5 +29,6 @@ volumes:
   target:
   hello_world_target:
   seed_target:
+  tonic_target:
   yew_target:
   js_node:

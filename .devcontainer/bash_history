@@ -2,3 +2,4 @@ cargo watch -x fmt -x clippy -x 'run --bin helloworld-server'
 cargo watch --poll -x fmt -x clippy -x 'run --bin helloworld-server'
 
 cargo run --bin helloworld-client
+cargo run --bin quote-server

@@ -50,3 +50,7 @@ jobs:
       - name: Build
         run: cargo build 
         working-directory: examples/helloworld
+
+      - name: Build
+        run: cargo build 
+        working-directory: examples/tonic-envoy
