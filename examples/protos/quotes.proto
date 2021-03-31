@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+message Quote {
+    string ticker = 1;
+    uint32 price = 2;
+    string currency = 3;
+}
+
+message QuoteRequest {
+    string ticker = 1;
+}
+
+service BookService {
+    rpc GetQuote(QuoteRequest) returns (Book) {}
+    rpc QueryQuotes(QuoteRequest) returns (stream Quote) {}
+}

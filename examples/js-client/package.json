@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "webpack --mode development",
     "start": "webpack serve",
-    "protoc": "protoc -I=../helloworld/proto helloworld.proto --js_out=import_style=commonjs:src --grpc-web_out=import_style=commonjs,mode=grpcwebtext:src"
+    "protoc": "protoc -I=../protos helloworld.proto --js_out=import_style=commonjs:src --grpc-web_out=import_style=commonjs,mode=grpcwebtext:src"
   },
   "dependencies": {
     "protoc-gen-grpc-web": "^1.2.1",

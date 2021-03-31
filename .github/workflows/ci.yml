@@ -46,3 +46,7 @@ jobs:
 
       - name: Test
         run: cargo test 
+
+      - name: Build
+        run: cargo build 
+        working-directory: examples/helloworld
