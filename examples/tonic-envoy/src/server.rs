@@ -11,9 +11,10 @@ pub mod quotes {
     tonic::include_proto!("quotes"); // The string specified here must match the proto package name
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct MyQuote {
-    quotes: Arc<Vec<Quote>>,
+    receiver: Arc<tokio::sync::mpsc::Receiver<Quote>>,
+    sender: Arc<tokio::sync::mpsc::Sender<Quote>>,
 }
 
 #[tonic::async_trait]
@@ -28,6 +29,15 @@ impl QuoteService for MyQuote {
             currency: "GBP".into(),
         }))
     }
+
+    async fn add_quote(&self, request: Request<Quote>) -> Result<Response<Quote>, Status> {
+        let quote = request.into_inner();
+
+        self.sender.send(quote.clone()).await.unwrap();
+
+        Ok(Response::new(quote))
+    }
+
     async fn query_quotes(
         &self,
         request: Request<QuoteRequest>,
@@ -35,12 +45,13 @@ impl QuoteService for MyQuote {
         println!("query_quotes = {:?}", request);
 
         let (tx, rx) = mpsc::channel(4);
-        let quotes = self.quotes.clone();
+        let receiver = self.receiver.clone();
 
         tokio::spawn(async move {
-            for quote in &quotes[..] {
-                tx.send(Ok(quote.clone())).await.unwrap();
-            }
+            //while let Some(quote) = receiver.recv().await {
+            //    println!("GOT = {:?}", quote);
+            //    tx.send(Ok(quote.clone())).await.unwrap();
+            //}
 
             println!(" /// done sending");
         });
@@ -54,8 +65,12 @@ impl QuoteService for MyQuote {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "0.0.0.0:50051".parse()?;
+
+    let (tx, rx) = mpsc::channel(4);
+
     let quoter = MyQuote {
-        quotes: Arc::new(Vec::new()),
+        receiver: Arc::new(rx),
+        sender: Arc::new(tx),
     };
 
     Server::builder()

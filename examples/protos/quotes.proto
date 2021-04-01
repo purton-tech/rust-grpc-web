@@ -14,5 +14,6 @@ message QuoteRequest {
 
 service QuoteService {
     rpc GetQuote(QuoteRequest) returns (Quote) {}
+    rpc AddQuote(Quote) returns (Quote) {}
     rpc QueryQuotes(QuoteRequest) returns (stream Quote) {}
 }
