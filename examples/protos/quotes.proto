@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package quotes;
+
+service QuoteService {
+    rpc GetCurrencies (CurrenciesRequest) returns (CurrencyReply);
+    rpc Subscribe (SubscribeRequest) returns (stream SubscribeReply);
+}
+
+message CurrencyReply {
+    repeated string iso_codes = 1;
+}
+
+message SubscribeRequest {}
+
+message CurrenciesRequest {}
+
+message SubscribeReply {
+   string key = 1;
+}
