@@ -1,14 +1,13 @@
-const {HelloRequest, HelloReply} = require('./helloworld_pb.js');
-const {GreeterClient} = require('./helloworld_grpc_web_pb.js');
+const {HelloRequest, HelloReply} = require('./quotes_pb.js');
+const {GreeterClient} = require('./quotes_pb_service.js');
 
-var client = new GreeterClient('http://localhost:8080');
+var client = new QuoteServiceClient('http://localhost:8080');
 
-var request = new HelloRequest();
-request.setName('World');
+var request = new CurrenciesRequest();
 
 console.log(request.serializeBinary())
 
-client.sayHello(request, {}, (err, response) => {
+client.getCurrencies(request, {}, (err, response) => {
   console.log(err)
   console.log(response.getMessage());
 });

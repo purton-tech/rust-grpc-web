@@ -8,6 +8,7 @@
   "license": "ISC",
   "devDependencies": {
     "html-webpack-plugin": "^5.3.1",
+    "ts-protoc-gen": "^0.14.0",
     "webpack": "^5.28.0",
     "webpack-cli": "^4.5.0",
     "webpack-dev-server": "^3.11.2"
@@ -15,13 +16,11 @@
   "scripts": {
     "dev": "webpack --mode development",
     "start": "webpack serve",
-    "protoc": "protoc -I=../protos helloworld.proto --js_out=import_style=commonjs:src --grpc-web_out=import_style=commonjs,mode=grpcwebtext:src"
+    "protoc": "protoc -I=../protos quotes.proto --plugin=protoc-gen-ts=./node_modules/.bin/protoc-gen-ts --js_out=import_style=commonjs,binary:src --ts_out=service=grpc-web:src"
   },
   "dependencies": {
-    "protoc-gen-grpc-web": "^1.2.1",
-    "@grpc/grpc-js": "~1.0.5",
-    "@grpc/proto-loader": "~0.5.4",
-    "google-protobuf": "~3.14.0",
-    "grpc-web": "~1.2.1"
+    "@improbable-eng/grpc-web": "^0.14.0",
+    "@types/google-protobuf": "^3.7.4",
+    "google-protobuf": "^3.15.8"
   }
 }
