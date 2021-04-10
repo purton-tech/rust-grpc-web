@@ -1,5 +1,5 @@
-const {HelloRequest, HelloReply} = require('./quotes_pb.js');
-const {GreeterClient} = require('./quotes_pb_service.js');
+const {CurrenciesRequest} = require('./quotes_pb.js');
+const {QuoteServiceClient} = require('./quotes_pb_service.js');
 
 var client = new QuoteServiceClient('http://localhost:8080');
 
