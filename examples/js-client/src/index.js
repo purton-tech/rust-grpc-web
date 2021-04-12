@@ -1,13 +1,30 @@
-const {CurrenciesRequest} = require('./quotes_pb.js');
+import { grpc } from "@improbable-eng/grpc-web";
+const {SubscribeRequest, CurrenciesRequest} = require('./quotes_pb.js');
 const {QuoteServiceClient} = require('./quotes_pb_service.js');
 
-var client = new QuoteServiceClient('http://localhost:8080');
+const client = new QuoteServiceClient('http://localhost:8080', {
+  transport: grpc.WebsocketTransport()
+});
 
-var request = new CurrenciesRequest();
-
-console.log(request.serializeBinary())
+const request = new CurrenciesRequest();
 
 client.getCurrencies(request, {}, (err, response) => {
   console.log(err)
-  console.log(response.getMessage());
+  console.log(response.getIsoCodesList());
+});
+
+const subscribeRequest = new SubscribeRequest();
+
+const stream = client.subscribe(request);
+
+stream.on('data', function(response) {
+  console.log(response.getKey());
+});
+stream.on('status', function(status) {
+  console.log(status.code);
+  console.log(status.details);
+  console.log(status.metadata);
+});
+stream.on('end', function(end) {
+  // stream end signal
 });

@@ -33,7 +33,7 @@ $ rm *.zip
 $ npm install
 $ npm run protoc
 $ npm run start
-$ grpcwebproxy --backend_addr=localhost:50051 --run_tls_server=false
+$ grpcwebproxy --backend_addr=localhost:50051 --run_tls_server=false --allow_all_origins --use_websockets
 ```
 
 Open your browser at `localhost:9000`
