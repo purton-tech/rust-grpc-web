@@ -1,10 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Webpack tutorial</title>
+    <style media="all">
+        #ticker {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
 </head>
-<body>
 
+<body>
+    <div id="ticker">
+        <input type="text" value="1">
+        <select>
+            <option>BTC</option>
+            <option>ETH</option>
+        </select>
+        =
+        <input id="price" type="text">
+        <select>
+            <option>USD</option>
+            <option>EUR</option>
+        </select>
+    </div>
 </body>
+
 </html>

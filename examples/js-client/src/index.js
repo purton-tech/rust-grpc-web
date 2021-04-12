@@ -18,7 +18,7 @@ const subscribeRequest = new SubscribeRequest();
 const stream = client.subscribe(request);
 
 stream.on('data', function(response) {
-  console.log(response.getKey());
+  document.getElementById('price').value = response.getKey()
 });
 stream.on('status', function(status) {
   console.log(status.code);
