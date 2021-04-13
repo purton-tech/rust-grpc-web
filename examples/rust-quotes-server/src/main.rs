@@ -53,6 +53,8 @@ impl proto::quote_service_server::QuoteService for ServerImpl {
 
 #[tokio::main]
 async fn main() {
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
     let (tx, _rx) = channel(1024);
     let addr = "0.0.0.0:50051".parse().unwrap();
 
@@ -60,8 +62,6 @@ async fn main() {
 
     tokio::spawn(async move {
         loop {
-            use std::collections::HashMap;
-
             sleep(Duration::from_millis(5000)).await;
             let client = reqwest::Client::new();
             let resp = client

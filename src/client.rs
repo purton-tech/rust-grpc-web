@@ -90,13 +90,19 @@ fn generate_unary<T: Method, S: Service>(
             frame.append(&mut proto_buffer);
             let base64 = base64::encode(frame);
 
-            let client = reqwest::Client::new();
+            dbg!(&base64);
+
+            let client = reqwest::Client::builder()
+                .build()?;
             let resp = client.post(format!("{}{}", &self.host, #url))
+                .header(reqwest::header::CONTENT_TYPE, "application/grpc-web-text")
                 .body(base64)
                 .send()
                 .await?
                 .text()
                 .await?;
+                
+            dbg!(&resp);
 
             let buffer = base64::decode(resp)?;
 
