@@ -49,8 +49,8 @@ jobs:
 
       - name: Build
         run: cargo build 
-        working-directory: examples/helloworld
+        working-directory: examples/rust-client
 
       - name: Build
         run: cargo build 
-        working-directory: examples/tonic-envoy
+        working-directory: examples/rust-quotes-server
