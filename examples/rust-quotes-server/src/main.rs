@@ -17,6 +17,19 @@ struct ServerImpl {
 
 #[async_trait]
 impl proto::quote_service_server::QuoteService for ServerImpl {
+    async fn say_hello(&self, hello_request:  Request<proto::HelloRequest>) 
+        -> Result<Response<proto::HelloReply>, Status> {
+            
+        let hello_request = hello_request.into_inner();
+
+        let resp = proto::HelloReply {
+            message: String::from(format!("Hello {}", hello_request.name)),
+        };
+
+        dbg!(&resp);
+
+        Ok(Response::new(resp))
+    }
     async fn get_currencies(
         &self,
         _request: Request<proto::CurrenciesRequest>,
@@ -24,6 +37,8 @@ impl proto::quote_service_server::QuoteService for ServerImpl {
         let reply = proto::CurrencyReply {
             iso_codes: vec!["BTC".into(), "ETH".into()],
         };
+
+        dbg!(&reply);
 
         Ok(Response::new(reply))
     }
@@ -76,8 +91,6 @@ async fn main() {
 
             let price: Vec<&str> = resp.split("\"").collect();
             let price = price[3].into();
-
-            dbg!(&price);
 
             tx.send(proto::SubscribeReply { key: price })
                 .expect("failed to send");

@@ -92,8 +92,7 @@ fn generate_unary<T: Method, S: Service>(
 
             dbg!(&base64);
 
-            let client = reqwest::Client::builder()
-                .build()?;
+            let client = reqwest::Client::new();
             let resp = client.post(format!("{}{}", &self.host, #url))
                 .header(reqwest::header::CONTENT_TYPE, "application/grpc-web-text")
                 .body(base64)
@@ -101,10 +100,12 @@ fn generate_unary<T: Method, S: Service>(
                 .await?
                 .text()
                 .await?;
-                
+
             dbg!(&resp);
 
-            let buffer = base64::decode(resp)?;
+            let split: Vec<&str> = resp.split("==").collect();
+
+            let buffer = base64::decode(split[0])?;
 
             let s = #response::decode(&buffer[5..])?;
             Ok(s)
