@@ -1,4 +1,4 @@
-use quotes::{quote_service_client, HelloRequest};
+use quotes::{quote_service_client, HelloRequest, CurrenciesRequest};
 
 pub mod quotes {
     include!(concat!(env!("OUT_DIR"), concat!("/quotes.rs")));
@@ -15,5 +15,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let res = client.say_hello(req).await?;
 
     println!("{:#?}", res);
+    
+    let req = CurrenciesRequest {};
+
+    let res = client.get_currencies(req).await?;
+
+    println!("{:#?}", res);
+
     Ok(())
 }

@@ -20,7 +20,6 @@ pub fn generate<T: Service>(
         /// Generated client implementations.
         pub mod #client_mod {
             #![allow(unused_variables, dead_code, missing_docs)]
-            use base64;
             use prost::Message;
             pub struct #service_name {
                 host: String
@@ -88,26 +87,22 @@ fn generate_unary<T: Method, S: Service>(
             frame.push(0 as u8);
             frame.append(&mut (proto_buffer.len() as u32).to_be_bytes().to_vec());
             frame.append(&mut proto_buffer);
-            let base64 = base64::encode(frame);
-
-            dbg!(&base64);
 
             let client = reqwest::Client::new();
-            let resp = client.post(format!("{}{}", &self.host, #url))
-                .header(reqwest::header::CONTENT_TYPE, "application/grpc-web-text")
-                .body(base64)
+            let mut bytes = client.post(format!("{}{}", &self.host, #url))
+                .header(reqwest::header::CONTENT_TYPE, "application/grpc-web+proto")
+                .body(frame)
                 .send()
                 .await?
-                .text()
+                .bytes()
                 .await?;
 
-            dbg!(&resp);
+            // Todo read in the whole length of the buffer.
+            let count: &u8 = bytes.get(4).unwrap();
+            let size = *count as usize;
+            let frame = bytes.split_to(5 + size);
 
-            let split: Vec<&str> = resp.split("==").collect();
-
-            let buffer = base64::decode(split[0])?;
-
-            let s = #response::decode(&buffer[5..])?;
+            let s = #response::decode(frame.slice(5..))?;
             Ok(s)
         }
     }
