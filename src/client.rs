@@ -36,6 +36,29 @@ pub fn generate<T: Service>(
                         host
                     }
                 }
+
+                fn frame_request<T: prost::Message>(request: T) -> Vec<u8> {
+                    let mut proto_buffer: Vec<u8> = Vec::new();
+                    request.encode(&mut proto_buffer).unwrap();
+                    let mut frame: Vec<u8> = Vec::new();
+                    frame.push(0 as u8);
+                    frame.append(&mut (proto_buffer.len() as u32).to_be_bytes().to_vec());
+                    frame.append(&mut proto_buffer);
+
+                    frame
+                }
+
+                // Websockets take an extra byte, not sure why.
+                // https://github.com/improbable-eng/grpc-web/blob/84ab65f9526bd73430fb786dced98135186dd099/client/grpc-web/src/transports/websocket/websocket.ts#L30
+                fn websocket_frame_request<T: prost::Message>(request: T) -> Vec<u8> {
+                    let mut proto_buffer: Vec<u8> = Vec::new();
+                    request.encode(&mut proto_buffer).unwrap();
+                    let mut frame: Vec<u8> = vec!(0,0);
+                    frame.append(&mut (proto_buffer.len() as u32).to_be_bytes().to_vec());
+                    frame.append(&mut proto_buffer);
+
+                    frame
+                }
             }
         }
     }
@@ -82,19 +105,15 @@ fn generate_server_streaming<T: Method, S: Service>(
             &self,
             request: #request
         ) -> Result<(), Box<dyn std::error::Error>> {
-            let mut proto_buffer: Vec<u8> = Vec::new();
-            request.encode(&mut proto_buffer).unwrap();
-
-            dbg!(&proto_buffer);
     
             let headers = "content-type: application/grpc-web+proto\r\nx-grpc-web: 1\r\n";
             let initial_msg = tungstenite::protocol::Message::binary(headers.as_bytes());
-
-            let bytes: Vec<u8> = vec!(0,0,0,0,0,0);
-            let bytes_msg = tungstenite::protocol::Message::binary(bytes);
+            let frame = tungstenite::protocol::Message::binary(Self::websocket_frame_request(request));
+            dbg!(&frame);
         
+            // Finsih send frame.
             let bytes: Vec<u8> = vec!(1);
-            let one_msg = tungstenite::protocol::Message::binary(bytes);
+            let finish_send = tungstenite::protocol::Message::binary(bytes);
 
             let host = "ws://localhost:8080";
             
@@ -106,8 +125,8 @@ fn generate_server_streaming<T: Method, S: Service>(
 
             let (mut ws_stream, _) = connect_async(req).await?;
             ws_stream.send(initial_msg).await?;
-            ws_stream.send(bytes_msg).await?;
-            ws_stream.send(one_msg).await?;
+            ws_stream.send(frame).await?;
+            ws_stream.send(finish_send).await?;
             while let Some(msg) = ws_stream.next().await {
                 let msg = msg?;
                 if msg.is_text() || msg.is_binary() {
@@ -135,12 +154,8 @@ fn generate_unary<T: Method, S: Service>(
             &self,
             request: #request
         ) -> Result<#response, Box<dyn std::error::Error>> {
-            let mut proto_buffer: Vec<u8> = Vec::new();
-            request.encode(&mut proto_buffer).unwrap();
-            let mut frame: Vec<u8> = Vec::new();
-            frame.push(0 as u8);
-            frame.append(&mut (proto_buffer.len() as u32).to_be_bytes().to_vec());
-            frame.append(&mut proto_buffer);
+
+            let frame = Self::frame_request(request);
 
             let client = reqwest::Client::new();
             let mut bytes = client.post(format!("{}{}", &self.host, #url))
