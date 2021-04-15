@@ -13,8 +13,8 @@ prost = "0"
 
 # For websockets
 tokio-tungstenite = "*"
-url = "2"
 futures-util = "0"
+http = "0"
 
 [build-dependencies]
 rust-grpc-web = { path = "../../" }

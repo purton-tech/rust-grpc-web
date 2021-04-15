@@ -1,5 +1,5 @@
 {
-	"name": "Rust",
+	"name": "Rust Web gRPC",
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "development",
     	"workspaceFolder": "/vscode",

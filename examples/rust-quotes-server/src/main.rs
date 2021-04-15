@@ -52,6 +52,8 @@ impl proto::quote_service_server::QuoteService for ServerImpl {
     ) -> Result<Response<Self::SubscribeStream>, Status> {
         let proto::SubscribeRequest {} = request.into_inner();
 
+        dbg!("A subscription");
+        
         let rx = self.tx.subscribe();
         let stream = BroadcastStream::new(rx)
             .filter_map(|item| async move {
