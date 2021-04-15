@@ -21,6 +21,9 @@ pub fn generate<T: Service>(
         pub mod #client_mod {
             #![allow(unused_variables, dead_code, missing_docs)]
             use prost::Message;
+            use tokio_tungstenite::{connect_async, tungstenite};
+            use http::Request;
+            use futures_util::{SinkExt, StreamExt};
             pub struct #service_name {
                 host: String
             }
@@ -51,9 +54,7 @@ fn generate_methods<T: Service>(
 
         let method = match (method.client_streaming(), method.server_streaming()) {
             (false, false) => generate_unary(service, method, proto_path, compile_well_known_types),
-            (false, true) => {
-                TokenStream::new()
-            }
+            (false, true) => generate_server_streaming(service, method, proto_path, compile_well_known_types),
             (true, false) => {
                 TokenStream::new()
             }
@@ -64,6 +65,59 @@ fn generate_methods<T: Service>(
     }
 
     stream
+}
+
+fn generate_server_streaming<T: Method, S: Service>(
+    service: &S,
+    method: &T,
+    proto_path: &str,
+    compile_well_known_types: bool,
+) -> TokenStream {
+    let ident = format_ident!("{}", method.name());
+    let (request, response) = method.request_response_name(proto_path, compile_well_known_types);
+    let url = format!("/{}.{}/{}", service.package(), service.name(), method.identifier());
+
+    quote! {
+        pub async fn #ident(
+            &self,
+            request: #request
+        ) -> Result<(), Box<dyn std::error::Error>> {
+            let mut proto_buffer: Vec<u8> = Vec::new();
+            request.encode(&mut proto_buffer).unwrap();
+
+            dbg!(&proto_buffer);
+    
+            let headers = "content-type: application/grpc-web+proto\r\nx-grpc-web: 1\r\n";
+            let initial_msg = tungstenite::protocol::Message::binary(headers.as_bytes());
+
+            let bytes: Vec<u8> = vec!(0,0,0,0,0,0);
+            let bytes_msg = tungstenite::protocol::Message::binary(bytes);
+        
+            let bytes: Vec<u8> = vec!(1);
+            let one_msg = tungstenite::protocol::Message::binary(bytes);
+
+            let host = "ws://localhost:8080";
+            
+            let req: Request<()> = Request::builder()
+                .uri(format!("{}{}", host, #url))
+                .header("Sec-Websocket-Protocol", "grpc-websockets")
+                .body(())
+                .unwrap();
+
+            let (mut ws_stream, _) = connect_async(req).await?;
+            ws_stream.send(initial_msg).await?;
+            ws_stream.send(bytes_msg).await?;
+            ws_stream.send(one_msg).await?;
+            while let Some(msg) = ws_stream.next().await {
+                let msg = msg?;
+                if msg.is_text() || msg.is_binary() {
+                    dbg!(msg);
+                }
+            }
+
+            Ok(())
+        }
+    }
 }
 
 fn generate_unary<T: Method, S: Service>(
