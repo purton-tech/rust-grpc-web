@@ -23,7 +23,7 @@ pub fn generate<T: Service>(
             use prost::Message;
             use tokio_tungstenite::{connect_async, tungstenite};
             use http::Request;
-            use futures_util::{SinkExt, StreamExt};
+            use futures_util::{SinkExt, StreamExt, Stream};
             pub struct #service_name {
                 host: String
             }
@@ -35,6 +35,11 @@ pub fn generate<T: Service>(
                     #service_name {
                         host
                     }
+                }
+
+                fn websocket_host(&self) -> String {
+                    let ssl_replace = str::replace(&self.host, "https", "wss");
+                    str::replace(&ssl_replace, "http", "ws")
                 }
 
                 fn frame_request<T: prost::Message>(request: T) -> Vec<u8> {
@@ -104,21 +109,18 @@ fn generate_server_streaming<T: Method, S: Service>(
         pub async fn #ident(
             &self,
             request: #request
-        ) -> Result<(), Box<dyn std::error::Error>> {
+        ) -> Result<impl Stream<Item = #response> + Unpin, Box<dyn std::error::Error>> {
     
             let headers = "content-type: application/grpc-web+proto\r\nx-grpc-web: 1\r\n";
             let initial_msg = tungstenite::protocol::Message::binary(headers.as_bytes());
             let frame = tungstenite::protocol::Message::binary(Self::websocket_frame_request(request));
-            dbg!(&frame);
         
             // Finsih send frame.
             let bytes: Vec<u8> = vec!(1);
             let finish_send = tungstenite::protocol::Message::binary(bytes);
-
-            let host = "ws://localhost:8080";
             
             let req: Request<()> = Request::builder()
-                .uri(format!("{}{}", host, #url))
+                .uri(format!("{}{}", self.websocket_host(), #url))
                 .header("Sec-Websocket-Protocol", "grpc-websockets")
                 .body(())
                 .unwrap();
@@ -127,14 +129,18 @@ fn generate_server_streaming<T: Method, S: Service>(
             ws_stream.send(initial_msg).await?;
             ws_stream.send(frame).await?;
             ws_stream.send(finish_send).await?;
-            while let Some(msg) = ws_stream.next().await {
-                let msg = msg?;
-                if msg.is_text() || msg.is_binary() {
-                    dbg!(msg);
-                }
-            }
 
-            Ok(())
+            let filtered = Box::pin(ws_stream.filter_map(|d| async {
+                let decoded = if let Ok(msg) = d {
+                    let bytes = msg.into_data();
+                    if let Ok(decoded) = #response::decode(bytes.as_ref()) {
+                        return Some(decoded);
+                    }
+                }; 
+                return None;
+            }));
+
+            Ok(filtered)
         }
     }
 }

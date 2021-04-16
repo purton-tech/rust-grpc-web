@@ -2,6 +2,7 @@ use quotes::{quote_service_client, HelloRequest, CurrenciesRequest, SubscribeReq
 pub mod quotes {
     include!(concat!(env!("OUT_DIR"), concat!("/quotes.rs")));
 }
+use futures_util::StreamExt;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -23,7 +24,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let sub_req = SubscribeRequest {};
 
-    client.subscribe(sub_req).await?;
+    let mut stream = client.subscribe(sub_req).await?;
+
+    while let Some(msg) = stream.next().await {
+        dbg!(msg);
+    }
 
     Ok(())
 }
