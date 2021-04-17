@@ -8,7 +8,6 @@ pub mod hello_world {
 }
 
 use seed::{prelude::*, *};
-use hello_world::{HelloRequest, HelloReply, greeter_client};
 
 // ------ ------
 //     Init
@@ -34,37 +33,15 @@ type Model = i32;
 //#[derive(Copy, Clone)]
 // `Msg` describes the different events you can modify state with.
 enum Msg {
-    Increment,
-    Fetched(Result<HelloReply, Box<dyn std::error::Error>>)
+    Increment
 }
 
 // `update` describes how to handle each `Msg`.
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::Increment => {
-            orders.skip().perform_cmd({
-                async { Msg::Fetched(send_message("World2!").await) }
-            });
         },
-
-        Msg::Fetched(Ok(response_data)) => {
-            log(response_data.message);
-        },
-
-        Msg::Fetched(Err(response_data)) => {
-            log("Not a result");
-        }
     }
-}
-
-async fn send_message(name: &str) -> Result<HelloReply, Box<dyn std::error::Error>> {
-    
-    let client = greeter_client::Greeter::new(String::from("http://localhost:8080"));
-            
-    let req = HelloRequest {
-        name: String::from(name)
-    };
-    client.say_hello(req).await
 }
 
 // ------ ------
@@ -75,10 +52,27 @@ async fn send_message(name: &str) -> Result<HelloReply, Box<dyn std::error::Erro
 #[allow(clippy::trivially_copy_pass_by_ref)]
 // `view` describes what to display.
 fn view(model: &Model) -> Node<Msg> {
-    div![
-        "This is a counter: ",
-        C!["counter"],
-        button![model, ev(Ev::Click, |_| Msg::Increment),],
+    div!
+    [
+        attrs!{
+            At::Id => "ticker", 
+        },
+        input![
+            attrs!{
+                At::Type => "text", 
+                At::Value => "1", 
+            },
+        ],
+        select![
+            option!["BTC"],
+            option!["ETH"],
+        ],
+        " = ",
+        input![
+            attrs!{
+                At::Type => "text", 
+            },
+        ],
     ]
 }
 
