@@ -10,8 +10,9 @@ use std::path::{Path, PathBuf};
 /// Use [`compile_protos`] instead if you don't need to tweak anything.
 pub fn configure() -> Builder {
     Builder {
-        build_client: true,
-        build_server: true,
+        build_client: false,
+        build_websys_client: true,
+        build_server: false,
         file_descriptor_set_path: None,
         out_dir: None,
         extern_path: Vec::new(),
@@ -197,6 +198,7 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
 #[derive(Debug, Clone)]
 pub struct Builder {
     pub(crate) build_client: bool,
+    pub(crate) build_websys_client: bool,
     pub(crate) build_server: bool,
     pub(crate) file_descriptor_set_path: Option<PathBuf>,
     pub(crate) extern_path: Vec<(String, String)>,
@@ -215,6 +217,12 @@ impl Builder {
     /// Enable or disable gRPC client code generation.
     pub fn build_client(mut self, enable: bool) -> Self {
         self.build_client = enable;
+        self
+    }
+
+    /// Enable or disable gRPC client code generation.
+    pub fn build_websys_client(mut self, enable: bool) -> Self {
+        self.build_websys_client = enable;
         self
     }
 
