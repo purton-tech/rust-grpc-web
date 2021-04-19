@@ -1,4 +1,4 @@
-use super::{client, server};
+use super::{client, server, websys_client};
 use proc_macro2::TokenStream;
 use prost_build::{Config, Method, Service};
 use quote::ToTokens;
@@ -163,10 +163,32 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
             );
             self.clients.extend(client);
         }
+
+        if self.builder.build_websys_client {
+            let client = websys_client::generate(
+                &service,
+                &self.builder.proto_path,
+                self.builder.compile_well_known_types,
+            );
+            self.clients.extend(client);
+        }
     }
 
     fn finalize(&mut self, buf: &mut String) {
         if self.builder.build_client && !self.clients.is_empty() {
+            let clients = &self.clients;
+
+            let client_service = quote::quote! {
+                #clients
+            };
+
+            let code = format!("{}", client_service);
+            buf.push_str(&code);
+
+            self.clients = TokenStream::default();
+        }
+
+        if self.builder.build_websys_client && !self.clients.is_empty() {
             let clients = &self.clients;
 
             let client_service = quote::quote! {

@@ -23,6 +23,8 @@ use std::process::{exit, Command};
 pub mod client;
 /// Service code generation for Server
 pub mod server;
+/// Service code generation for wasm client
+pub mod websys_client;
 
 /// Service generation trait.
 ///
