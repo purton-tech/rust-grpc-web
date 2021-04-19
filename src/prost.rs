@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 pub fn configure() -> Builder {
     Builder {
         build_client: false,
-        build_websys_client: true,
+        build_websys_client: false,
         build_server: false,
         file_descriptor_set_path: None,
         out_dir: None,
