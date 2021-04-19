@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package quotes;
+
+service QuoteService {
+    rpc SayHello (HelloRequest) returns (HelloReply) {}
+    rpc GetCurrencies (CurrenciesRequest) returns (CurrencyReply);
+    rpc Subscribe (SubscribeRequest) returns (stream SubscribeReply);
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings
+message HelloReply {
+  string message = 1;
+}
+
+message CurrencyReply {
+    repeated string iso_codes = 1;
+}
+
+message SubscribeRequest {}
+
+message CurrenciesRequest {}
+
+message SubscribeReply {
+   string key = 1;
+}

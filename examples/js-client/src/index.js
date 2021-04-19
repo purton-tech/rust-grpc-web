@@ -1,14 +1,30 @@
-const {HelloRequest, HelloReply} = require('./helloworld_pb.js');
-const {GreeterClient} = require('./helloworld_grpc_web_pb.js');
+import { grpc } from "@improbable-eng/grpc-web";
+const {SubscribeRequest, CurrenciesRequest} = require('./quotes_pb.js');
+const {QuoteServiceClient} = require('./quotes_pb_service.js');
 
-var client = new GreeterClient('http://localhost:8080');
+const client = new QuoteServiceClient('http://localhost:8080', {
+  transport: grpc.WebsocketTransport()
+});
 
-var request = new HelloRequest();
-request.setName('World');
+const request = new CurrenciesRequest();
 
-console.log(request.serializeBinary())
-
-client.sayHello(request, {}, (err, response) => {
+client.getCurrencies(request, {}, (err, response) => {
   console.log(err)
-  console.log(response.getMessage());
+  console.log(response.getIsoCodesList());
+});
+
+const subscribeRequest = new SubscribeRequest();
+
+const stream = client.subscribe(request);
+
+stream.on('data', function(response) {
+  document.getElementById('price').value = response.getKey()
+});
+stream.on('status', function(status) {
+  console.log(status.code);
+  console.log(status.details);
+  console.log(status.metadata);
+});
+stream.on('end', function(end) {
+  // stream end signal
 });

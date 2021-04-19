@@ -1,4 +1,4 @@
-use super::{client, server};
+use super::{client, server, websys_client};
 use proc_macro2::TokenStream;
 use prost_build::{Config, Method, Service};
 use quote::ToTokens;
@@ -10,8 +10,9 @@ use std::path::{Path, PathBuf};
 /// Use [`compile_protos`] instead if you don't need to tweak anything.
 pub fn configure() -> Builder {
     Builder {
-        build_client: true,
-        build_server: true,
+        build_client: false,
+        build_websys_client: false,
+        build_server: false,
         file_descriptor_set_path: None,
         out_dir: None,
         extern_path: Vec::new(),
@@ -162,10 +163,32 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
             );
             self.clients.extend(client);
         }
+
+        if self.builder.build_websys_client {
+            let client = websys_client::generate(
+                &service,
+                &self.builder.proto_path,
+                self.builder.compile_well_known_types,
+            );
+            self.clients.extend(client);
+        }
     }
 
     fn finalize(&mut self, buf: &mut String) {
         if self.builder.build_client && !self.clients.is_empty() {
+            let clients = &self.clients;
+
+            let client_service = quote::quote! {
+                #clients
+            };
+
+            let code = format!("{}", client_service);
+            buf.push_str(&code);
+
+            self.clients = TokenStream::default();
+        }
+
+        if self.builder.build_websys_client && !self.clients.is_empty() {
             let clients = &self.clients;
 
             let client_service = quote::quote! {
@@ -197,6 +220,7 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
 #[derive(Debug, Clone)]
 pub struct Builder {
     pub(crate) build_client: bool,
+    pub(crate) build_websys_client: bool,
     pub(crate) build_server: bool,
     pub(crate) file_descriptor_set_path: Option<PathBuf>,
     pub(crate) extern_path: Vec<(String, String)>,
@@ -215,6 +239,12 @@ impl Builder {
     /// Enable or disable gRPC client code generation.
     pub fn build_client(mut self, enable: bool) -> Self {
         self.build_client = enable;
+        self
+    }
+
+    /// Enable or disable gRPC client code generation.
+    pub fn build_websys_client(mut self, enable: bool) -> Self {
+        self.build_websys_client = enable;
         self
     }
 

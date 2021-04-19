@@ -1,0 +1,20 @@
+[package]
+name = "rust-client"
+version = "0.1.0"
+authors = ["Ian Purton <ian.purton@gmail.com>"]
+edition = "2018"
+publish = true
+license = "MIT"
+
+[dependencies]
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
+prost = "0"
+
+# For websockets
+tokio-tungstenite = "*"
+futures-util = "0"
+http = "0"
+
+[build-dependencies]
+rust-grpc-web = { path = "../../" }

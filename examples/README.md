@@ -26,10 +26,14 @@ You'll need to start the Rust Actix-Web server then build and run the client.
 $ cd js-client
 $ sudo apt update
 $ sudo apt install -y protobuf-compiler
-$ npm i protoc-gen-grpc-web
+$ wget https://github.com/improbable-eng/grpc-web/releases/download/v0.14.0/grpcwebproxy-v0.14.0-linux-x86_64.zip
+$ unzip grpc*
+$ sudo mv dist/grpcwebproxy-v0.14.0-linux-x86_64 /usr/bin/grpcwebproxy
+$ rm *.zip
 $ npm install
 $ npm run protoc
 $ npm run start
+$ grpcwebproxy --backend_addr=localhost:50051 --run_tls_server=false --allow_all_origins --use_websockets
 ```
 
 Open your browser at `localhost:9000`

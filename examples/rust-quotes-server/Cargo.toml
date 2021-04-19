@@ -1,0 +1,19 @@
+[package]
+name = "quotes"
+version = "0.1.0"
+authors = ["Ian Purton <ian.purton@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+prost = "0.7"
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+tokio-stream = { version = "0", features = ["sync"] }
+tonic = "0.4"
+reqwest = { version = "0.11", features = ["json"] }
+env_logger = "0"
+
+[build-dependencies]
+tonic-build = "0.4"

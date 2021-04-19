@@ -11,11 +11,11 @@ services:
       - ~/.ssh:/home/host-ssh:cached
       - /var/run/docker.sock:/var/run/docker.sock
       - target:/vscode/target # Set target as a volume for performance. 
-      - hello_world_target:/vscode/examples/helloworld/target # Set target as a volume for performance. 
-      - seed_target:/vscode/examples/seed-client/target # Set target as a volume for performance. 
+      - hello_world_target:/vscode/examples/rust-client/target # Set target as a volume for performance. 
+      - seed_target:/vscode/examples/seed-wasm-client/target # Set target as a volume for performance. 
       - js_node:/vscode/examples/js-client/node_modules # Set target as a volume for performance. 
-      - yew_target:/vscode/examples/yew-client/target # Set target as a volume for performance. 
-      - tonic_target:/vscode/examples/tonic-envoy/target # Set target as a volume for performance. 
+      - yew_target:/vscode/examples/yew-wasm-client/target # Set target as a volume for performance. 
+      - quotes_target:/vscode/examples/rust-quotes-server/target # Set target as a volume for performance. 
 
     environment:
       DATABASE_URL: postgresql://vscode:testpassword@db:5432
@@ -29,6 +29,6 @@ volumes:
   target:
   hello_world_target:
   seed_target:
-  tonic_target:
+  quotes_target:
   yew_target:
   js_node:

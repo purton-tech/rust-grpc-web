@@ -21,9 +21,6 @@ pub fn generate<T: Service>(
         pub mod #client_mod {
             #![allow(unused_variables, dead_code, missing_docs)]
             use prost::Message;
-            use tokio_tungstenite::{connect_async, tungstenite};
-            use http::Request;
-            use futures_util::{SinkExt, StreamExt, Stream};
             pub struct #service_name {
                 host: String
             }
@@ -35,6 +32,19 @@ pub fn generate<T: Service>(
                     #service_name {
                         host
                     }
+                }
+
+                pub fn initialise_stream<T: prost::Message>(request: T, web_socket: &web_sys::WebSocket) {
+                    let headers = "content-type: application/grpc-web+proto\r\nx-grpc-web: 1\r\n";
+                    web_socket.send_with_u8_array(headers.as_bytes()).unwrap();
+                
+                    // Send frame
+                    let frame = Self::websocket_frame_request(request);
+                    web_socket.send_with_u8_array(&frame).unwrap();
+                
+                    // Send finish
+                    let bytes: Vec<u8> = vec!(1);
+                    web_socket.send_with_u8_array(&bytes).unwrap();
                 }
 
                 fn websocket_host(&self) -> String {
@@ -55,7 +65,7 @@ pub fn generate<T: Service>(
 
                 // Websockets take an extra byte, not sure why.
                 // https://github.com/improbable-eng/grpc-web/blob/84ab65f9526bd73430fb786dced98135186dd099/client/grpc-web/src/transports/websocket/websocket.ts#L30
-                fn websocket_frame_request<T: prost::Message>(request: T) -> Vec<u8> {
+                pub fn websocket_frame_request<T: prost::Message>(request: T) -> Vec<u8> {
                     let mut proto_buffer: Vec<u8> = Vec::new();
                     request.encode(&mut proto_buffer).unwrap();
                     let mut frame: Vec<u8> = vec!(0,0);
@@ -96,52 +106,13 @@ fn generate_methods<T: Service>(
 }
 
 fn generate_server_streaming<T: Method, S: Service>(
-    service: &S,
-    method: &T,
-    proto_path: &str,
-    compile_well_known_types: bool,
+    _service: &S,
+    _method: &T,
+    _proto_path: &str,
+    _compile_well_known_types: bool,
 ) -> TokenStream {
-    let ident = format_ident!("{}", method.name());
-    let (request, response) = method.request_response_name(proto_path, compile_well_known_types);
-    let url = format!("/{}.{}/{}", service.package(), service.name(), method.identifier());
 
     quote! {
-        pub async fn #ident(
-            &self,
-            request: #request
-        ) -> Result<impl Stream<Item = #response> + Unpin, Box<dyn std::error::Error>> {
-    
-            let headers = "content-type: application/grpc-web+proto\r\nx-grpc-web: 1\r\n";
-            let initial_msg = tungstenite::protocol::Message::binary(headers.as_bytes());
-            let frame = tungstenite::protocol::Message::binary(Self::websocket_frame_request(request));
-        
-            // Finsih send frame.
-            let bytes: Vec<u8> = vec!(1);
-            let finish_send = tungstenite::protocol::Message::binary(bytes);
-            
-            let req: Request<()> = Request::builder()
-                .uri(format!("{}{}", self.websocket_host(), #url))
-                .header("Sec-Websocket-Protocol", "grpc-websockets")
-                .body(())
-                .unwrap();
-
-            let (mut ws_stream, _) = connect_async(req).await?;
-            ws_stream.send(initial_msg).await?;
-            ws_stream.send(frame).await?;
-            ws_stream.send(finish_send).await?;
-
-            let filtered = Box::pin(ws_stream.filter_map(|d| async {
-                let decoded = if let Ok(msg) = d {
-                    let bytes = msg.into_data();
-                    if let Ok(decoded) = #response::decode(bytes.as_ref()) {
-                        return Some(decoded);
-                    }
-                }; 
-                return None;
-            }));
-
-            Ok(filtered)
-        }
     }
 }
 
