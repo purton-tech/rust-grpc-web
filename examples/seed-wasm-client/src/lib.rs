@@ -2,7 +2,7 @@
 //  - it's useful when you want to check your code with `cargo make verify`
 // but some rules are too "annoying" or are not applicable for your case.)
 #![allow(clippy::wildcard_imports)]
-use quotes::{HelloRequest, CurrenciesRequest, SubscribeReply, SubscribeRequest};
+use quotes::{SubscribeReply, SubscribeRequest};
 pub mod quotes {
     include!(concat!(env!("OUT_DIR"), concat!("/quotes.rs")));
 }
@@ -19,8 +19,7 @@ use std::rc::Rc;
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     Model {
         price: String::from(""),
-        web_socket: create_websocket(orders),
-        web_socket_reconnector: None,
+        quote_stream: create_quote_stream(orders)
     }
 }
 
@@ -30,25 +29,42 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
 
 pub struct Model {
     price: String,
-    web_socket: WebSocket,
-    web_socket_reconnector: Option<StreamHandle>
+    quote_stream: WebSocket
 }
 
 // ------ ------
 //    Update
 // ------ ------
 
-
 pub enum Msg {
-    WebSocketOpened,
-    CloseWebSocket,
-    BinaryMessageReceived(Vec<u8>),
-    WebSocketClosed(CloseEvent),
-    WebSocketFailed,
-    ReconnectWebSocket(usize),
-    InputTextChanged(String),
-    InputBinaryChanged(String),
+    QuoteStreamOpened,
+    QuoteReceived(SubscribeReply),
+    QuoteStreamClosed(CloseEvent),
+    QuoteStreamFailed,
 }
+
+fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
+    match msg {
+        Msg::QuoteReceived(quote) => {
+            model.price = quote.key;
+        }
+        Msg::QuoteStreamOpened => {
+            initialise_stream(&mut model.quote_stream);
+        }
+        Msg::QuoteStreamClosed(close_event) => {
+            log!("==================");
+            log!("Quote stream connection was closed:");
+            log!("Clean:", close_event.was_clean());
+            log!("Code:", close_event.code());
+            log!("Reason:", close_event.reason());
+            log!("==================");
+        }
+        Msg::QuoteStreamFailed => {
+            log!("Quote stream failed");
+        }
+    }
+}
+
 fn websocket_frame_request<T: prost::Message>(request: T) -> Vec<u8> {
     let mut proto_buffer: Vec<u8> = Vec::new();
     request.encode(&mut proto_buffer).unwrap();
@@ -59,100 +75,49 @@ fn websocket_frame_request<T: prost::Message>(request: T) -> Vec<u8> {
     frame
 }
 
-fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
-    match msg {
-        Msg::BinaryMessageReceived(bytes) => {
+fn initialise_stream(web_socket: &mut WebSocket) {
+    log!("Sending Headers");
+    let headers = "content-type: application/grpc-web+proto\r\nx-grpc-web: 1\r\n";
+    web_socket.send_bytes(headers.as_bytes()).unwrap();
+    log!("WebSocket connection is open now");
 
-            if let Ok(decoded) = SubscribeReply::decode(bytes.as_ref()) {
-                log!("Msg : ", decoded);
-                model.price = decoded.key;
-            }
-        }
-        Msg::WebSocketOpened => {
-            log!("Sending Headers");
-            model.web_socket_reconnector = None;
-            let headers = "content-type: application/grpc-web+proto\r\nx-grpc-web: 1\r\n";
-            model.web_socket.send_bytes(headers.as_bytes()).unwrap();
-            log!("WebSocket connection is open now");
+    // Send frame
+    let request = SubscribeRequest {};
+    let frame = websocket_frame_request(request);
+    web_socket.send_bytes(&frame).unwrap();
 
-            // Send frame
-            let request = SubscribeRequest {};
-            let frame = websocket_frame_request(request);
-            model.web_socket.send_bytes(&frame);
-
-            // Send finish
-            let bytes: Vec<u8> = vec!(1);
-            model.web_socket.send_bytes(&bytes);
-            
-        }
-        Msg::CloseWebSocket => {
-            model.web_socket_reconnector = None;
-            model
-                .web_socket
-                .close(None, Some("user clicked Close button"))
-                .unwrap();
-        }
-        Msg::WebSocketClosed(close_event) => {
-            log!("==================");
-            log!("WebSocket connection was closed:");
-            log!("Clean:", close_event.was_clean());
-            log!("Code:", close_event.code());
-            log!("Reason:", close_event.reason());
-            log!("==================");
-
-            // Chrome doesn't invoke `on_error` when the connection is lost.
-            if !close_event.was_clean() && model.web_socket_reconnector.is_none() {
-                model.web_socket_reconnector = Some(
-                    orders.stream_with_handle(streams::backoff(None, Msg::ReconnectWebSocket)),
-                );
-            }
-        }
-        Msg::WebSocketFailed => {
-            log!("WebSocket failed2");
-            if model.web_socket_reconnector.is_none() {
-                model.web_socket_reconnector = Some(
-                    orders.stream_with_handle(streams::backoff(None, Msg::ReconnectWebSocket)),
-                );
-            }
-        }
-        Msg::ReconnectWebSocket(retries) => {
-            //log!("Reconnect attempt:", retries);
-            //model.web_socket = create_websocket(orders);
-        }
-        Msg::InputTextChanged(text) => {
-        }
-        Msg::InputBinaryChanged(text) => {
-        }
-    }
+    // Send finish
+    let bytes: Vec<u8> = vec!(1);
+    web_socket.send_bytes(&bytes).unwrap();
 }
 
-fn create_websocket(orders: &impl Orders<Msg>) -> WebSocket {
+fn create_quote_stream(orders: &impl Orders<Msg>) -> WebSocket {
     let msg_sender = orders.msg_sender();
 
     WebSocket::builder("ws://localhost:8080/quotes.QuoteService/Subscribe", orders)
-        .on_open(|| Msg::WebSocketOpened)
+        .on_open(|| Msg::QuoteStreamOpened)
         .protocols(&["grpc-websockets"])
         .on_message(move |msg| decode_message(msg, msg_sender))
-        .on_close(Msg::WebSocketClosed)
-        .on_error(|| Msg::WebSocketFailed)
+        .on_close(Msg::QuoteStreamClosed)
+        .on_error(|| Msg::QuoteStreamFailed)
         .build_and_open()
         .unwrap()
 }
 
 fn decode_message(message: WebSocketMessage, msg_sender: Rc<dyn Fn(Option<Msg>)>) {
-    if message.contains_text() {
+    spawn_local(async move {
+        let bytes = message
+            .bytes()
+            .await
+            .expect("WebsocketError on binary data");
 
-        //msg_sender(Some(Msg::TextMessageReceived(msg)));
-    } else {
-        spawn_local(async move {
-            let bytes = message
-                .bytes()
-                .await
-                .expect("WebsocketError on binary data");
 
-            msg_sender(Some(Msg::BinaryMessageReceived(bytes)));
-        });
-    }
+        if let Ok(decoded) = SubscribeReply::decode(bytes.as_ref()) {
+            log!("Msg : ", decoded);
+            msg_sender(Some(Msg::QuoteReceived(decoded)));
+        }
+
+    });
 }
 
 // ------ ------
