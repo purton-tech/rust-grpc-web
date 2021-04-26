@@ -49,8 +49,4 @@ jobs:
 
       - name: Build
         run: cargo build 
-        working-directory: examples/rust-client
-
-      - name: Build
-        run: cargo build 
         working-directory: examples/rust-quotes-server
