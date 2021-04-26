@@ -11,14 +11,10 @@ services:
       - ~/.ssh:/home/host-ssh:cached
       - /var/run/docker.sock:/var/run/docker.sock
       - target:/vscode/target # Set target as a volume for performance. 
-      - hello_world_target:/vscode/examples/rust-client/target # Set target as a volume for performance. 
       - seed_target:/vscode/examples/seed-wasm-client/target # Set target as a volume for performance. 
       - js_node:/vscode/examples/js-client/node_modules # Set target as a volume for performance. 
       - yew_target:/vscode/examples/yew-wasm-client/target # Set target as a volume for performance. 
       - quotes_target:/vscode/examples/rust-quotes-server/target # Set target as a volume for performance. 
-
-    environment:
-      DATABASE_URL: postgresql://vscode:testpassword@db:5432
 
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
@@ -27,7 +23,6 @@ services:
 
 volumes:
   target:
-  hello_world_target:
   seed_target:
   quotes_target:
   yew_target:
