@@ -19,10 +19,6 @@ use std::io::{self, Write};
 #[cfg_attr(docsrs, doc(cfg(feature = "rustfmt")))]
 use std::process::{exit, Command};
 
-/// Service code generation for client
-pub mod client;
-/// Service code generation for Server
-pub mod server;
 /// Service code generation for wasm client
 pub mod websys_client;
 

@@ -2,6 +2,8 @@
 
 A Rust implementation of [gRPC][] for browser clients. Useful for webassembly based framewoks such as Yew and Seed.rs.
 
+Creates client stubs that can make gRPC calls. Needs to be used with the gRCP-Web proxy from improbable https://github.com/improbable-eng/grpc-web
+
 ## Generating Client Code
 
 ```toml
@@ -25,7 +27,6 @@ At the root of your crate, create a build.rs file and add the following code:
 ```rust
 fn main() {
     rust_grpc_web::configure()
-        .build_client(true)
         .compile(&["proto/helloworld.proto"], &["proto"])
         .unwrap();
 }

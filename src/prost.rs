@@ -1,4 +1,4 @@
-use super::{client, server, websys_client};
+use super::{websys_client};
 use proc_macro2::TokenStream;
 use prost_build::{Config, Method, Service};
 use quote::ToTokens;
@@ -10,9 +10,7 @@ use std::path::{Path, PathBuf};
 /// Use [`compile_protos`] instead if you don't need to tweak anything.
 pub fn configure() -> Builder {
     Builder {
-        build_client: false,
-        build_websys_client: false,
-        build_server: false,
+        build_websys_client: true,
         file_descriptor_set_path: None,
         out_dir: None,
         extern_path: Vec::new(),
@@ -130,7 +128,6 @@ impl crate::Method for Method {
 struct ServiceGenerator {
     builder: Builder,
     clients: TokenStream,
-    servers: TokenStream,
 }
 
 impl ServiceGenerator {
@@ -138,31 +135,12 @@ impl ServiceGenerator {
         ServiceGenerator {
             builder,
             clients: TokenStream::default(),
-            servers: TokenStream::default(),
         }
     }
 }
 
 impl prost_build::ServiceGenerator for ServiceGenerator {
     fn generate(&mut self, service: prost_build::Service, _buf: &mut String) {
-        if self.builder.build_server {
-            let server = server::generate(
-                &service,
-                self.builder.emit_package,
-                &self.builder.proto_path,
-                self.builder.compile_well_known_types,
-            );
-            self.servers.extend(server);
-        }
-
-        if self.builder.build_client {
-            let client = client::generate(
-                &service,
-                &self.builder.proto_path,
-                self.builder.compile_well_known_types,
-            );
-            self.clients.extend(client);
-        }
 
         if self.builder.build_websys_client {
             let client = websys_client::generate(
@@ -175,18 +153,6 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
     }
 
     fn finalize(&mut self, buf: &mut String) {
-        if self.builder.build_client && !self.clients.is_empty() {
-            let clients = &self.clients;
-
-            let client_service = quote::quote! {
-                #clients
-            };
-
-            let code = format!("{}", client_service);
-            buf.push_str(&code);
-
-            self.clients = TokenStream::default();
-        }
 
         if self.builder.build_websys_client && !self.clients.is_empty() {
             let clients = &self.clients;
@@ -200,28 +166,13 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
 
             self.clients = TokenStream::default();
         }
-
-        if self.builder.build_server && !self.servers.is_empty() {
-            let servers = &self.servers;
-
-            let server_service = quote::quote! {
-                #servers
-            };
-
-            let code = format!("{}", server_service);
-            buf.push_str(&code);
-
-            self.servers = TokenStream::default();
-        }
     }
 }
 
 /// Service generator builder.
 #[derive(Debug, Clone)]
 pub struct Builder {
-    pub(crate) build_client: bool,
     pub(crate) build_websys_client: bool,
-    pub(crate) build_server: bool,
     pub(crate) file_descriptor_set_path: Option<PathBuf>,
     pub(crate) extern_path: Vec<(String, String)>,
     pub(crate) field_attributes: Vec<(String, String)>,
@@ -236,21 +187,10 @@ pub struct Builder {
 }
 
 impl Builder {
-    /// Enable or disable gRPC client code generation.
-    pub fn build_client(mut self, enable: bool) -> Self {
-        self.build_client = enable;
-        self
-    }
 
     /// Enable or disable gRPC client code generation.
     pub fn build_websys_client(mut self, enable: bool) -> Self {
         self.build_websys_client = enable;
-        self
-    }
-
-    /// Enable or disable gRPC server code generation.
-    pub fn build_server(mut self, enable: bool) -> Self {
-        self.build_server = enable;
         self
     }
 
