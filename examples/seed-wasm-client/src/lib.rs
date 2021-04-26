@@ -2,7 +2,7 @@
 //  - it's useful when you want to check your code with `cargo make verify`
 // but some rules are too "annoying" or are not applicable for your case.)
 #![allow(clippy::wildcard_imports)]
-use quotes::{quote_service_client::QuoteService, SubscribeReply, SubscribeRequest};
+use quotes::{quote_service_client::QuoteService, HelloRequest, SubscribeReply, SubscribeRequest};
 pub mod quotes {
     include!(concat!(env!("OUT_DIR"), concat!("/quotes.rs")));
 }
@@ -67,6 +67,15 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
 
 fn create_quote_stream(orders: &impl Orders<Msg>) -> WebSocket {
     let msg_sender = orders.msg_sender();
+
+    // Just for a PoC call the say hello method.
+    spawn_local(async move {
+        let client = QuoteService::new(String::from("http://localhost:8080"));
+        let resp = client.say_hello(HelloRequest{
+            name: String::from("seed")
+        }).await;
+        log!(resp);
+    });
 
     WebSocket::builder("ws://localhost:8080/quotes.QuoteService/Subscribe", orders)
         .on_open(|| Msg::QuoteStreamOpened)

@@ -137,6 +137,7 @@ fn generate_unary<T: Method, S: Service>(
             let client = reqwest::Client::new();
             let mut bytes = client.post(format!("{}{}", &self.host, #url))
                 .header(reqwest::header::CONTENT_TYPE, "application/grpc-web+proto")
+                .header("x-grpc-web", "1")
                 .body(frame)
                 .send()
                 .await?
