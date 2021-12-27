@@ -1,13 +1,15 @@
-FROM ianpurton/rust-devcontainer:latest AS base
+FROM ianpurton/rust-fullstack-devcontainer:latest
 
-FROM base AS development
+# Add our aliases and ps1
+COPY *.bash ./
+RUN cat aliases.bash >> ~/.bashrc && cat ps1.bash >> ~/.bashrc && sudo rm *.bash
 
-COPY ./bash_history /home/vscode/.bash_history
-RUN sudo chown vscode /home/vscode/.bash_history
+# Give us access to docker in docker
+RUN echo 'sudo chmod 777 /var/run/docker.sock' >> ~/.bashrc
 
 RUN sudo apt update \
-    && sudo apt install -y protobuf-compiler \
-    && sudo wget https://github.com/improbable-eng/grpc-web/releases/download/v0.14.0/grpcwebproxy-v0.14.0-linux-x86_64.zip  \
+    && sudo apt install -y protobuf-compiler unzip \
+    && sudo curl -OL https://github.com/improbable-eng/grpc-web/releases/download/v0.14.0/grpcwebproxy-v0.14.0-linux-x86_64.zip  \
     && sudo unzip grpc* \
     && sudo mv dist/grpcwebproxy-v0.14.0-linux-x86_64 /usr/bin/grpcwebproxy \
     && sudo rm *.zip 
