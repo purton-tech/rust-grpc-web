@@ -12,7 +12,7 @@ tokio = { version = "1", features = ["full"] }
 futures = "0.3"
 tokio-stream = { version = "0", features = ["sync"] }
 tonic = "0.4"
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.11", default-features = false, features = ["rustls", "json"] }
 env_logger = "0"
 
 [build-dependencies]
