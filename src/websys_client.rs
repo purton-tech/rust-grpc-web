@@ -11,6 +11,7 @@ pub fn generate<T: Service>(
     service: &T,
     proto_path: &str,
     compile_well_known_types: bool,
+    support_streaming: bool,
 ) -> TokenStream {
     let client_mod = quote::format_ident!("{}_client", naive_snake_case(&service.name()));
     let service_name = quote::format_ident!("{}", service.name());
@@ -34,24 +35,6 @@ pub fn generate<T: Service>(
                     }
                 }
 
-                pub fn initialise_stream<T: prost::Message>(request: T, web_socket: &web_sys::WebSocket) {
-                    let headers = "content-type: application/grpc-web+proto\r\nx-grpc-web: 1\r\n";
-                    web_socket.send_with_u8_array(headers.as_bytes()).unwrap();
-                
-                    // Send frame
-                    let frame = Self::websocket_frame_request(request);
-                    web_socket.send_with_u8_array(&frame).unwrap();
-                
-                    // Send finish
-                    let bytes: Vec<u8> = vec!(1);
-                    web_socket.send_with_u8_array(&bytes).unwrap();
-                }
-
-                fn websocket_host(&self) -> String {
-                    let ssl_replace = str::replace(&self.host, "https", "wss");
-                    str::replace(&ssl_replace, "http", "ws")
-                }
-
                 fn frame_request<T: prost::Message>(request: T) -> Vec<u8> {
                     let mut proto_buffer: Vec<u8> = Vec::new();
                     request.encode(&mut proto_buffer).unwrap();
@@ -63,16 +46,36 @@ pub fn generate<T: Service>(
                     frame
                 }
 
-                // Websockets take an extra byte, not sure why.
-                // https://github.com/improbable-eng/grpc-web/blob/84ab65f9526bd73430fb786dced98135186dd099/client/grpc-web/src/transports/websocket/websocket.ts#L30
-                pub fn websocket_frame_request<T: prost::Message>(request: T) -> Vec<u8> {
-                    let mut proto_buffer: Vec<u8> = Vec::new();
-                    request.encode(&mut proto_buffer).unwrap();
-                    let mut frame: Vec<u8> = vec!(0,0);
-                    frame.append(&mut (proto_buffer.len() as u32).to_be_bytes().to_vec());
-                    frame.append(&mut proto_buffer);
-
-                    frame
+                if support_streaming {
+                    pub fn initialise_stream<T: prost::Message>(request: T, web_socket: &web_sys::WebSocket) {
+                        let headers = "content-type: application/grpc-web+proto\r\nx-grpc-web: 1\r\n";
+                        web_socket.send_with_u8_array(headers.as_bytes()).unwrap();
+                    
+                        // Send frame
+                        let frame = Self::websocket_frame_request(request);
+                        web_socket.send_with_u8_array(&frame).unwrap();
+                    
+                        // Send finish
+                        let bytes: Vec<u8> = vec!(1);
+                        web_socket.send_with_u8_array(&bytes).unwrap();
+                    }
+    
+                    fn websocket_host(&self) -> String {
+                        let ssl_replace = str::replace(&self.host, "https", "wss");
+                        str::replace(&ssl_replace, "http", "ws")
+                    }
+    
+                    // Websockets take an extra byte, not sure why.
+                    // https://github.com/improbable-eng/grpc-web/blob/84ab65f9526bd73430fb786dced98135186dd099/client/grpc-web/src/transports/websocket/websocket.ts#L30
+                    pub fn websocket_frame_request<T: prost::Message>(request: T) -> Vec<u8> {
+                        let mut proto_buffer: Vec<u8> = Vec::new();
+                        request.encode(&mut proto_buffer).unwrap();
+                        let mut frame: Vec<u8> = vec!(0,0);
+                        frame.append(&mut (proto_buffer.len() as u32).to_be_bytes().to_vec());
+                        frame.append(&mut proto_buffer);
+    
+                        frame
+                    }
                 }
             }
         }
