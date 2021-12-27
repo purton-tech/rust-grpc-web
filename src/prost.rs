@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 pub fn configure() -> Builder {
     Builder {
         build_websys_client: true,
+        support_streaming: false,
         file_descriptor_set_path: None,
         out_dir: None,
         extern_path: Vec::new(),
@@ -147,6 +148,7 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
                 &service,
                 &self.builder.proto_path,
                 self.builder.compile_well_known_types,
+                self.builder.support_streaming,
             );
             self.clients.extend(client);
         }
@@ -180,6 +182,7 @@ pub struct Builder {
     pub(crate) proto_path: String,
     pub(crate) emit_package: bool,
     pub(crate) compile_well_known_types: bool,
+    pub(crate) support_streaming: bool,
 
     out_dir: Option<PathBuf>,
     #[cfg(feature = "rustfmt")]
@@ -191,6 +194,12 @@ impl Builder {
     /// Enable or disable gRPC client code generation.
     pub fn build_websys_client(mut self, enable: bool) -> Self {
         self.build_websys_client = enable;
+        self
+    }
+
+    /// Streaming support via websys
+    pub fn support_streaming(mut self, enable: bool) -> Self {
+        self.support_streaming = enable;
         self
     }
 
