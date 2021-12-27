@@ -13,7 +13,7 @@ pub fn generate<T: Service>(
     compile_well_known_types: bool,
     support_streaming: bool,
 ) -> TokenStream {
-    let client_mod = quote::format_ident!("{}_client", naive_snake_case(&service.name()));
+    let client_mod = quote::format_ident!("{}_client", naive_snake_case(service.name()));
     let service_name = quote::format_ident!("{}", service.name());
     let methods = generate_methods(service, proto_path, compile_well_known_types);
     let streaming_support = generate_streaming_support(support_streaming);
@@ -39,8 +39,7 @@ pub fn generate<T: Service>(
                 fn frame_request<T: prost::Message>(request: T) -> Vec<u8> {
                     let mut proto_buffer: Vec<u8> = Vec::new();
                     request.encode(&mut proto_buffer).unwrap();
-                    let mut frame: Vec<u8> = Vec::new();
-                    frame.push(0 as u8);
+                    let mut frame: Vec<u8> = vec!(0_u8);
                     frame.append(&mut (proto_buffer.len() as u32).to_be_bytes().to_vec());
                     frame.append(&mut proto_buffer);
 
