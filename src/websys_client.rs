@@ -161,9 +161,10 @@ fn generate_unary<T: Method, S: Service>(
                 .await?;
 
             // Todo read in the whole length of the buffer.
-            let count: &u8 = bytes.get(4).unwrap();
-            let size = *count as usize;
-            let frame = bytes.split_to(5 + size);
+            let mut dst = [0u8; 4];
+            dst.clone_from_slice(&bytes[1..5]);
+            let size = u32::from_be_bytes(dst);
+            let frame = bytes.split_to(5 + (size as usize));
 
             let s = #response::decode(frame.slice(5..))?;
             Ok(s)
