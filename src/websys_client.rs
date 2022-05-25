@@ -18,6 +18,8 @@ pub fn generate<T: Service>(
     let methods = generate_methods(service, proto_path, compile_well_known_types);
     let streaming_support = generate_streaming_support(support_streaming);
 
+    let status = generate_grpc_status();
+
     quote! {
         /// Generated client implementations.
         pub mod #client_mod {
@@ -48,6 +50,8 @@ pub fn generate<T: Service>(
 
                 #streaming_support
             }
+
+            #status
         }
     }
 }
@@ -151,13 +155,26 @@ fn generate_unary<T: Method, S: Service>(
             let frame = Self::frame_request(request);
 
             let client = reqwest::Client::new();
-            let mut bytes = client.post(format!("{}{}", &self.host, #url))
+            let result = client.post(format!("{}{}", &self.host, #url))
                 .header(reqwest::header::CONTENT_TYPE, "application/grpc-web+proto")
                 .header("x-grpc-web", "1")
                 .body(frame)
                 .send()
-                .await?
-                .bytes()
+                .await?;
+
+            let headers = result.headers();
+            if headers.contains_key("grpc-status") && headers.contains_key("grpc-message") {
+                let grpc_status = headers["grpc-status"].to_str()?.to_string().parse::<u32>()?;
+                let grpc_message = headers["grpc-message"].to_str()?.to_string();
+
+                let status: GrpcStatus = GrpcStatus::from_code(grpc_status, grpc_message);
+
+                if status.is_error(){
+                    return Err(Box::new(status));
+                }
+            }
+
+            let mut bytes = result.bytes()
                 .await?;
 
             // Todo read in the whole length of the buffer.
@@ -169,5 +186,71 @@ fn generate_unary<T: Method, S: Service>(
             let s = #response::decode(frame.slice(5..))?;
             Ok(s)
         }
+    }
+}
+
+fn generate_grpc_status() -> TokenStream {
+    quote! {
+        #[derive(Debug)]
+        pub enum GrpcStatus{
+            Ok(String),
+            Cancelled(String),
+            Unknown(String),
+            InvalidArgument(String),
+            DeadlineExceeded(String),
+            NotFound(String),
+            AlreadyExists(String),
+            PermissionDenied(String),
+            ResourceExhausted(String),
+            FailedPrecondition(String),
+            Aborted(String),
+            OutOfRange(String),
+            Unimplemented(String),
+            Internal(String),
+            Unavailable(String),
+            DataLoss(String),
+            Unauthenticated(String),
+            Other(String)
+        }
+        
+        impl GrpcStatus{
+            pub fn from_code(code: u32, message: String) -> Self {
+                match code {
+                    0 => Self::Ok(message),
+                    1 => Self::Cancelled(message),
+                    2 => Self::Unknown(message),
+                    3 => Self::InvalidArgument(message),
+                    4 => Self::DeadlineExceeded(message),
+                    5 => Self::NotFound(message),
+                    6 => Self::AlreadyExists(message),
+                    7 => Self::PermissionDenied(message),
+                    8 => Self::ResourceExhausted(message),
+                    9 => Self::FailedPrecondition(message),
+                    10 => Self::Aborted(message),
+                    11 => Self::OutOfRange(message),
+                    12 => Self::Unimplemented(message),
+                    13 => Self::Internal(message),
+                    14 => Self::Unavailable(message),
+                    15 => Self::DataLoss(message),
+                    16 => Self::Unauthenticated(message),
+                    _ => Self::Other(message)
+                }
+            }
+        
+            pub fn is_error(&self) -> bool{
+                match self {
+                    GrpcStatus::Ok(_) => false,
+                    _ => true
+                }
+            }
+        }
+        
+        impl std::fmt::Display for GrpcStatus {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "GrpcStatus::{:?}", self)
+            }
+        }
+        
+        impl std::error::Error for GrpcStatus {}
     }
 }
